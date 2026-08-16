@@ -58,6 +58,11 @@ namespace ianiboy
         float dryMix      = 0.0f;   // 0..1 parallel dry injection
         bool  clipOn      = true;
         float clipCeil    = 0.98f;  // linear ceiling
+
+        // per-band enable (1 = on, 0 = off) resolved from solo/mute upstream
+        float lowActive   = 1.0f;
+        float midActive   = 1.0f;
+        float highActive  = 1.0f;
     };
 
     class MultibandEngine
@@ -171,7 +176,8 @@ namespace ianiboy
                 for (int ch = 0; ch < numCh; ++ch)
                     buffer.addFrom (ch, 0, dry, ch, 0, n, params.dryMix);
 
-            // 5) output clipper -> output trim
+            // 5) output clipper -> output trim (track peak gain reduction)
+            float maxOver = 0.0f;
             for (int ch = 0; ch < numCh; ++ch)
             {
                 auto* d = buffer.getWritePointer (ch);
@@ -179,11 +185,22 @@ namespace ianiboy
                 {
                     float x = d[i] * params.outGain;
                     if (params.clipOn)
+                    {
+                        const float a = std::abs (x);
+                        if (a > params.clipCeil)
+                            maxOver = juce::jmax (maxOver, a - params.clipCeil);
                         x = juce::jlimit (-params.clipCeil, params.clipCeil, x);
+                    }
                     d[i] = x;
                 }
             }
+            // reduction in dB: how far the loudest peak was shaved
+            clipReductionDb = (maxOver > 0.0f && params.clipCeil > 0.0f)
+                ? juce::Decibels::gainToDecibels (params.clipCeil / (params.clipCeil + maxOver))
+                : 0.0f;
         }
+
+        float getClipReductionDb() const noexcept { return clipReductionDb; }
 
     private:
         // ---- per-block coefficient refresh ------------------------------------
@@ -278,7 +295,9 @@ namespace ianiboy
                 }
 
                 for (int ch = 0; ch < numCh; ++ch)
-                    osBlock.setSample (ch, i, lowCh[ch] + midCh[ch] + hiCh[ch]);
+                    osBlock.setSample (ch, i,   lowCh[ch] * params.lowActive
+                                              + midCh[ch] * params.midActive
+                                              + hiCh[ch]  * params.highActive);
             }
         }
 
@@ -286,6 +305,7 @@ namespace ianiboy
         EngineParams params;
         double baseSampleRate = 44100.0, osSampleRate = 176400.0;
         int channels = 2, osLog2 = 2, latencySamples = 0;
+        float clipReductionDb = 0.0f;
 
         std::unique_ptr<juce::dsp::Oversampling<float>> oversampler;
 

@@ -1,8 +1,10 @@
 #pragma once
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "dsp/MultibandEngine.h"
+#include "dsp/AnalyzerFifo.h"
 #include "Parameters.h"
 #include "Presets.h"
+#include "PresetManager.h"
 
 class IaniboyAudioProcessor : public juce::AudioProcessor
 {
@@ -36,11 +38,20 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-    juce::AudioProcessorValueTreeState apvts;
+    // -- A/B compare ---------------------------------------------------------
+    void switchAB (int slot);                 // 0 = A, 1 = B
+    void copyCurrentToOther();                // duplicate active slot into the other
+    int  getABSlot() const { return abCurrent; }
 
-    // Editor peeks these for the mascot / meters (atomic, UI-thread safe)
-    std::atomic<float> outPeak { 0.0f };
-    std::atomic<float> energy  { 0.0f };   // 0..1 "how wild is the processing"
+    juce::AudioProcessorValueTreeState apvts;
+    ianiboy::PresetManager presets { apvts };
+    ianiboy::AnalyzerFifo  analyzer;          // spectrum feed (UI reads)
+
+    // Editor peeks these (atomic, UI-thread safe)
+    std::atomic<float> inPeak   { 0.0f };
+    std::atomic<float> outPeak  { 0.0f };
+    std::atomic<float> clipGRdb { 0.0f };
+    std::atomic<float> energy   { 0.0f };     // mascot "how wild" 0..1
 
 private:
     void updateEngineParams();
@@ -51,6 +62,9 @@ private:
     double lastSampleRate = 44100.0;
     int    lastBlockSize  = 512;
     int    lastChannels   = 2;
+
+    juce::ValueTree abState[2];
+    int abCurrent = 0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (IaniboyAudioProcessor)
 };

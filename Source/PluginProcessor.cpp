@@ -9,6 +9,9 @@ IaniboyAudioProcessor::IaniboyAudioProcessor()
                         .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
       apvts (*this, nullptr, "IaniboyState", createParameterLayout())
 {
+    // seed both A/B slots with the initial state
+    abState[0] = apvts.copyState().createCopy();
+    abState[1] = apvts.copyState().createCopy();
 }
 
 bool IaniboyAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -69,6 +72,24 @@ void IaniboyAudioProcessor::updateEngineParams()
     p.clipOn     = raw (pid::clipOn) > 0.5f;
     p.clipCeil   = dbToLin (raw (pid::clipCeil));
 
+    // resolve solo / mute into per-band enable flags
+    const bool lS = raw (pid::lowSolo)  > 0.5f;
+    const bool mS = raw (pid::midSolo)  > 0.5f;
+    const bool hS = raw (pid::highSolo) > 0.5f;
+    const bool anySolo = lS || mS || hS;
+    if (anySolo)
+    {
+        p.lowActive  = lS ? 1.0f : 0.0f;
+        p.midActive  = mS ? 1.0f : 0.0f;
+        p.highActive = hS ? 1.0f : 0.0f;
+    }
+    else
+    {
+        p.lowActive  = raw (pid::lowMute)  > 0.5f ? 0.0f : 1.0f;
+        p.midActive  = raw (pid::midMute)  > 0.5f ? 0.0f : 1.0f;
+        p.highActive = raw (pid::highMute) > 0.5f ? 0.0f : 1.0f;
+    }
+
     engine.setParams (p);
 
     // UI "energy" heuristic for the mascot: how hard are we pushing?
@@ -91,14 +112,42 @@ void IaniboyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
         setLatencySamples (engine.getLatencySamples());
     }
 
+    // input meter (before processing)
+    float inMag = 0.0f;
+    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+        inMag = juce::jmax (inMag, buffer.getMagnitude (ch, 0, buffer.getNumSamples()));
+    inPeak.store (inMag);
+
     updateEngineParams();
     engine.process (buffer);
 
-    // output peak for the editor meter
+    // output meter + clipper gain reduction
     float peak = 0.0f;
     for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
         peak = juce::jmax (peak, buffer.getMagnitude (ch, 0, buffer.getNumSamples()));
     outPeak.store (peak);
+    clipGRdb.store (engine.getClipReductionDb());
+
+    // feed the spectrum analyzer (UI reads asynchronously)
+    if (buffer.getNumChannels() > 0)
+        analyzer.pushMono (buffer.getArrayOfReadPointers(),
+                           buffer.getNumChannels(), buffer.getNumSamples());
+}
+
+// ---- A/B compare ------------------------------------------------------------
+void IaniboyAudioProcessor::switchAB (int slot)
+{
+    slot = juce::jlimit (0, 1, slot);
+    if (slot == abCurrent) return;
+    abState[abCurrent] = apvts.copyState().createCopy();   // stash current
+    abCurrent = slot;
+    if (abState[slot].isValid())
+        apvts.replaceState (abState[slot].createCopy());
+}
+
+void IaniboyAudioProcessor::copyCurrentToOther()
+{
+    abState[1 - abCurrent] = apvts.copyState().createCopy();
 }
 
 // ---- programs ---------------------------------------------------------------

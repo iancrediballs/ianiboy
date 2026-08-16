@@ -54,6 +54,21 @@ Init (Transparent) · Vocals – Parallel Heat · Bass – Anchor & Growl ·
 Kick – Rumble Engine · Drums – Bus Crush · Synth – Screech Fold ·
 Synth – Digital Sizzle · FX – Industrial Texture · Master – Density Glue
 
+## v2 UI & features
+
+- **Scalable canvas** — the whole interface is laid out at a fixed design size
+  and scaled to fit any window, so nothing clips (Ceiling included) and it
+  resizes crisply. Drag any corner.
+- **Live spectrum** with the Low|Mid and Mid|High crossover points drawn on
+  it — watch the 3-band split move as you turn the X knobs.
+- **In / Out meters** with peak-hold, plus a live **clipper gain-reduction**
+  readout in the Output panel.
+- **Per-band Solo / Mute** (S/M buttons on each band) to audition a lane alone.
+- **A / B compare** — flip between two full settings, and `A>B` to copy the
+  active one across.
+- **Preset browser** — prev/next arrows, factory presets, and **save your own**
+  (type a name, hit SAVE; user presets live in your app-data folder).
+
 ## The mascot
 
 The panel on the right is **Ianiboy** himself (vector-drawn, zero image

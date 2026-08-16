@@ -43,6 +43,14 @@ namespace ianiboy::pid
     // output
     static constexpr auto clipOn    = "clipOn";
     static constexpr auto clipCeil  = "clipCeil";
+
+    // per-band solo / mute
+    static constexpr auto lowMute   = "lowMute";
+    static constexpr auto midMute   = "midMute";
+    static constexpr auto highMute  = "highMute";
+    static constexpr auto lowSolo   = "lowSolo";
+    static constexpr auto midSolo   = "midSolo";
+    static constexpr auto highSolo  = "highSolo";
 }
 
 namespace ianiboy
@@ -113,6 +121,14 @@ namespace ianiboy
         p.push_back (std::make_unique<AudioParameterBool> (ParameterID{pid::clipOn,1},  "Clipper", true));
         p.push_back (std::make_unique<AudioParameterFloat>(ParameterID{pid::clipCeil,1},"Ceiling",
                         NormalisableRange<float>(-12.f,0.f,0.1f), -0.3f));
+
+        // ---- per-band solo / mute ----
+        p.push_back (std::make_unique<AudioParameterBool>(ParameterID{pid::lowMute,1},  "Low Mute",  false));
+        p.push_back (std::make_unique<AudioParameterBool>(ParameterID{pid::midMute,1},  "Mid Mute",  false));
+        p.push_back (std::make_unique<AudioParameterBool>(ParameterID{pid::highMute,1}, "High Mute", false));
+        p.push_back (std::make_unique<AudioParameterBool>(ParameterID{pid::lowSolo,1},  "Low Solo",  false));
+        p.push_back (std::make_unique<AudioParameterBool>(ParameterID{pid::midSolo,1},  "Mid Solo",  false));
+        p.push_back (std::make_unique<AudioParameterBool>(ParameterID{pid::highSolo,1}, "High Solo", false));
 
         return { p.begin(), p.end() };
     }
