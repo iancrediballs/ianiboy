@@ -71,6 +71,7 @@ void IaniboyAudioProcessor::updateEngineParams()
 
     p.clipOn     = raw (pid::clipOn) > 0.5f;
     p.clipCeil   = dbToLin (raw (pid::clipCeil));
+    p.autoGain   = raw (pid::autoGain) > 0.5f;
 
     // resolve solo / mute into per-band enable flags
     const bool lS = raw (pid::lowSolo)  > 0.5f;
@@ -127,6 +128,7 @@ void IaniboyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
         peak = juce::jmax (peak, buffer.getMagnitude (ch, 0, buffer.getNumSamples()));
     outPeak.store (peak);
     clipGRdb.store (engine.getClipReductionDb());
+    autoGainDb.store (engine.getAutoGainDb());
 
     // feed the spectrum analyzer (UI reads asynchronously)
     if (buffer.getNumChannels() > 0)

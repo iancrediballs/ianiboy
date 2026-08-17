@@ -50,9 +50,18 @@ saturated body — no comb filtering, exactly as the blueprint's
 
 ## Factory presets
 
-Init (Transparent) · Vocals – Parallel Heat · Bass – Anchor & Growl ·
-Kick – Rumble Engine · Drums – Bus Crush · Synth – Screech Fold ·
-Synth – Digital Sizzle · FX – Industrial Texture · Master – Density Glue
+Init, plus three escalating intensity tiers — **Medium / Aggressive / Large** —
+for each source: **Vocals, Bass, Drums, Kick, Synth, Master**, plus specials
+**FX – Industrial Texture** and **Synth – Digital Sizzle**. Medium is mix-ready,
+Aggressive is up-front, Large is sound-design territory.
+
+## Auto Gain (loudness match)
+
+The **Auto Gain** toggle in the Output panel continuously trims the output so
+its loudness matches the *input* — so bypass and A/B are honest comparisons of
+*tone*, not just level. It reads input vs. output RMS and glides a makeup trim
+(±24 dB range) smoothly. When it's on, it effectively takes over the level role
+from the manual Output knob and clipper; turn it off to set levels by hand.
 
 ## v2 UI & features
 

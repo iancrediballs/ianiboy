@@ -63,6 +63,8 @@ namespace ianiboy
         float lowActive   = 1.0f;
         float midActive   = 1.0f;
         float highActive  = 1.0f;
+
+        bool  autoGain    = false;  // match output loudness back to input
     };
 
     class MultibandEngine
@@ -148,6 +150,11 @@ namespace ianiboy
             const int numCh = juce::jmin (channels, buffer.getNumChannels());
             const int n     = buffer.getNumSamples();
 
+            // measure true input loudness (pre-gain) for the Auto Gain matcher
+            float inRMS = 0.0f;
+            for (int ch = 0; ch < numCh; ++ch) inRMS += buffer.getRMSLevel (ch, 0, n);
+            if (numCh > 0) inRMS /= (float) numCh;
+
             // 1) input trim
             buffer.applyGain (params.inGain);
 
@@ -198,9 +205,31 @@ namespace ianiboy
             clipReductionDb = (maxOver > 0.0f && params.clipCeil > 0.0f)
                 ? juce::Decibels::gainToDecibels (params.clipCeil / (params.clipCeil + maxOver))
                 : 0.0f;
+
+            // 6) Auto Gain: glide output loudness back to the input loudness
+            if (params.autoGain)
+            {
+                float outRMS = 0.0f;
+                for (int ch = 0; ch < numCh; ++ch) outRMS += buffer.getRMSLevel (ch, 0, n);
+                if (numCh > 0) outRMS /= (float) numCh;
+
+                if (outRMS > 1.0e-6f && inRMS > 1.0e-6f)
+                {
+                    const float target = juce::jlimit (0.0625f, 16.0f, inRMS / outRMS); // +/-24 dB
+                    smoothedAuto += 0.10f * (target - smoothedAuto);
+                }
+                buffer.applyGain (smoothedAuto);
+                autoGainDb = juce::Decibels::gainToDecibels (smoothedAuto);
+            }
+            else
+            {
+                smoothedAuto = 1.0f;
+                autoGainDb   = 0.0f;
+            }
         }
 
         float getClipReductionDb() const noexcept { return clipReductionDb; }
+        float getAutoGainDb()     const noexcept { return autoGainDb; }
 
     private:
         // ---- per-block coefficient refresh ------------------------------------
@@ -306,6 +335,7 @@ namespace ianiboy
         double baseSampleRate = 44100.0, osSampleRate = 176400.0;
         int channels = 2, osLog2 = 2, latencySamples = 0;
         float clipReductionDb = 0.0f;
+        float smoothedAuto = 1.0f, autoGainDb = 0.0f;
 
         std::unique_ptr<juce::dsp::Oversampling<float>> oversampler;
 

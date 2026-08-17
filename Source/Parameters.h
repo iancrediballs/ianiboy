@@ -43,6 +43,7 @@ namespace ianiboy::pid
     // output
     static constexpr auto clipOn    = "clipOn";
     static constexpr auto clipCeil  = "clipCeil";
+    static constexpr auto autoGain  = "autoGain";
 
     // per-band solo / mute
     static constexpr auto lowMute   = "lowMute";
@@ -121,6 +122,7 @@ namespace ianiboy
         p.push_back (std::make_unique<AudioParameterBool> (ParameterID{pid::clipOn,1},  "Clipper", true));
         p.push_back (std::make_unique<AudioParameterFloat>(ParameterID{pid::clipCeil,1},"Ceiling",
                         NormalisableRange<float>(-12.f,0.f,0.1f), -0.3f));
+        p.push_back (std::make_unique<AudioParameterBool> (ParameterID{pid::autoGain,1}, "Auto Gain", false));
 
         // ---- per-band solo / mute ----
         p.push_back (std::make_unique<AudioParameterBool>(ParameterID{pid::lowMute,1},  "Low Mute",  false));

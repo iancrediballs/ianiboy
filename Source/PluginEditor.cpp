@@ -100,8 +100,10 @@ Canvas::Canvas (IaniboyAudioProcessor& p)
 
     addAndMakeVisible (lowMonoBtn);
     addAndMakeVisible (clipBtn);
-    lowMonoAtt = std::make_unique<ButtonAtt> (proc.apvts, pid::lowMono, lowMonoBtn);
-    clipAtt    = std::make_unique<ButtonAtt> (proc.apvts, pid::clipOn,  clipBtn);
+    addAndMakeVisible (autoBtn);
+    lowMonoAtt = std::make_unique<ButtonAtt> (proc.apvts, pid::lowMono,  lowMonoBtn);
+    clipAtt    = std::make_unique<ButtonAtt> (proc.apvts, pid::clipOn,   clipBtn);
+    autoAtt    = std::make_unique<ButtonAtt> (proc.apvts, pid::autoGain, autoBtn);
 
     // ---- knobs ----
     addKnob (pid::inGain,   "INPUT");
@@ -302,8 +304,10 @@ void Canvas::resized()
         auto knobCell = p.removeFromLeft (130);
         placeKnob (pid::clipCeil, knobCell.removeFromTop (106));
         auto rightCol = p.reduced (8, 0);
-        clipBtn.setBounds (rightCol.removeFromTop (30).removeFromLeft (110));
-        rightCol.removeFromTop (10);
+        autoBtn.setBounds (rightCol.removeFromTop (26).removeFromLeft (120));
+        rightCol.removeFromTop (6);
+        clipBtn.setBounds (rightCol.removeFromTop (26).removeFromLeft (110));
+        rightCol.removeFromTop (8);
         grLabel.setBounds (rightCol.removeFromTop (24));
     }
 }
@@ -355,7 +359,9 @@ void Canvas::timerCallback()
     mascot.punch (proc.outPeak.load());
 
     const float gr = proc.clipGRdb.load();
-    grLabel.setText ("GR  " + (gr < -0.05f ? juce::String (gr, 1) + " dB" : "0.0 dB"),
+    const float ag = proc.autoGainDb.load();
+    grLabel.setText ("GR " + juce::String (gr < -0.05f ? gr : 0.0f, 1)
+                     + " · AUTO " + juce::String (ag, 1),
                      juce::dontSendNotification);
 
     abA.setToggleState (proc.getABSlot() == 0, juce::dontSendNotification);

@@ -66,11 +66,11 @@ namespace ianiboy
         juce::ComboBox lowModeBox, midTypeBox, highTypeBox;
         juce::Label    lowModeLabel, midTypeLabel, highTypeLabel;
         juce::TextButton lowSolo{"S"}, lowMuteB{"M"}, midSolo{"S"}, midMuteB{"M"}, highSolo{"S"}, highMuteB{"M"};
-        juce::ToggleButton lowMonoBtn { "Mono" }, clipBtn { "Clip" };
+        juce::ToggleButton lowMonoBtn { "Mono" }, clipBtn { "Clip" }, autoBtn { "Auto Gain" };
 
         std::unique_ptr<ComboAtt>  lowModeAtt, midTypeAtt, highTypeAtt, osAtt;
         std::unique_ptr<ButtonAtt> lowSoloAtt, lowMuteAtt, midSoloAtt, midMuteAtt,
-                                   highSoloAtt, highMuteAtt, lowMonoAtt, clipAtt;
+                                   highSoloAtt, highMuteAtt, lowMonoAtt, clipAtt, autoAtt;
 
         // visuals
         SpectrumComponent spectrum;

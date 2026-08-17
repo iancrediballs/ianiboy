@@ -51,6 +51,7 @@ public:
     std::atomic<float> inPeak   { 0.0f };
     std::atomic<float> outPeak  { 0.0f };
     std::atomic<float> clipGRdb { 0.0f };
+    std::atomic<float> autoGainDb { 0.0f };
     std::atomic<float> energy   { 0.0f };     // mascot "how wild" 0..1
 
 private:
